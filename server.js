@@ -30,11 +30,13 @@ db.connect(function(err) {
           "View department",
           "View roles",
           "View employees",
-          "Add departments",
+          "Add department",
           "Add role",
           "Add employee",
-          "Update employee role",
-          'Remove Employee',
+          "Update employee",
+          "Delete Department",
+          "Delete Role",
+          "Delete Employee",
           "Quit"
         ],
         message: "What would you like to do?",
@@ -62,11 +64,16 @@ db.connect(function(err) {
           case "View employees":
             viewEmployees();
             break;
-            
-            case 'Remove Employee':
-          removeEmployee();
+          case 'Delete Department':
+            deleteDepartment();
+            break;
+            case 'Delete Role':
+            deleteRole();
+            break;
+            case 'Delete Employee':
+          deleteEmployee();
           break;
-          case "Update employee role":
+          case "Update employee":
             updateEmployee();
             break;
           default:
@@ -184,7 +191,7 @@ db.connect(function(err) {
         {
             name: "role_id",
             type: "number",
-            message: "Please enter the new role number id associated with the employee you want to update in the database. Enter ONLY numbers."
+            message: "Please enter the new role id associated with the employee you want to update in the database. Enter ONLY numbers."
         }
     ]).then(function (response) {
         db.query("UPDATE employee SET role_id = ? WHERE first_name = ?", [response.role_id, response.first_name], function (err, data) {
@@ -240,7 +247,7 @@ db.connect(function(err) {
   }
 
   //The code for removing employees when selected by the user 
-  function removeEmployee() {
+  function deleteEmployee() {
     db.query("SELECT * FROM employee", function (err, res) {
       if (err) throw err;
       inquirer.prompt([
@@ -265,6 +272,55 @@ db.connect(function(err) {
       });
     })
   };
+
+  //The code for removing departments when selected by the user 
+  function deleteDepartment() {
+    inquirer.prompt([
+        {
+            name: "department_id",
+            type: "number",
+            message: "Please enter the id of the department you want to delete from the database. Enter ONLY numbers."
+        }
+    ]).then(function (response) {
+        db.query("DELETE FROM department WHERE id = ?", [response.department_id], function (err, data) {
+            if (err) throw err;
+            console.log("The department entered has been deleted successfully from the database.");
+
+            db.query(`SELECT * FROM department`, (err, result) => {
+                if (err) {
+                    res.status(500).json({ error: err.message })
+                    startScreen();
+                }
+                console.table(result);
+                startScreen();
+            });
+        })
+});
+};
+
+function deleteRole() {
+  inquirer.prompt([
+      {
+          name: "role_id",
+          type: "number",
+          message: "Please enter the id of the role you want to delete from the database. Enter ONLY numbers."
+      }
+  ]).then(function (response) {
+      db.query("DELETE FROM role WHERE id = ?", [response.role_id], function (err, data) {
+          if (err) throw err;
+          console.log("The role entered has been deleted successfully from the database.");
+
+          db.query(`SELECT * FROM role`, (err, result) => {
+              if (err) {
+                  res.status(500).json({ error: err.message })
+                  startScreen();
+              }
+              console.table(result);
+              startScreen();
+          });
+      })
+});
+};
   
   function quit() {
     db.end();
