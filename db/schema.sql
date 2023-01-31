@@ -1,7 +1,3 @@
-DROP DATABASE IF EXISTS employeeTracker;
-
-CREATE DATABASE employeeTracker;
-USE employeeTracker;
 
 CREATE TABLE department (
     id INTEGER PRIMARY KEY AUTO_INCREMENT,
@@ -28,3 +24,7 @@ CREATE TABLE employee (
     INDEX manager_ind (manager_id),
     CONSTRAINT fk_manager FOREIGN KEY (manager_id) REFERENCES employee(id) ON DELETE SET NULL
 );
+
+SELECT * FROM department;
+SELECT * FROM role;
+SELECT * FROM employee;
