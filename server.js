@@ -31,9 +31,10 @@ db.connect(function(err) {
           "View roles",
           "View employees",
           "Add departments",
-          "Add roles",
-          "Add employees",
+          "Add role",
+          "Add employee",
           "Update employee role",
+          'Remove Employee',
           "Quit"
         ],
         message: "What would you like to do?",
@@ -52,7 +53,7 @@ db.connect(function(err) {
           case "Add employee":
             addEmployee();
             break;
-          case "View departments":
+          case "View department":
             viewDepartment();
             break;
           case "View roles":
@@ -61,6 +62,10 @@ db.connect(function(err) {
           case "View employees":
             viewEmployees();
             break;
+            
+            case 'Remove Employee':
+          removeEmployee();
+          break;
           case "Update employee role":
             updateEmployee();
             break;
@@ -128,65 +133,75 @@ db.connect(function(err) {
   
   //The code for adding employees when selected by the user 
   function addEmployee() {
-    inquirer
-      .prompt([
+    inquirer.prompt([
         {
-          type: "input",
-          message: "What's the first name of the employee?",
-          name: "FirstName"
+            name: "first_name",
+            type: "input",
+            message: "Please enter the first name of the employee."
         },
         {
-          type: "input",
-          message: "What's the last name of the employee?",
-          name: "LastName"
+            name: "last_name",
+            type: "input",
+            message: "Please enter the last name of the employee."
         },
         {
-          type: "input",
-          message: "What is the employee's role id number?",
-          name: "roleID"
+            name: "role_id",
+            type: "number",
+            message: "Please enter the role id associated with the employee. Enter ONLY numbers."
         },
         {
-          type: "input",
-          message: "What is the manager id number?",
-          name: "managerID"
+            name: "manager_id",
+            type: "number",
+            message: "Please enter the manager's id associated with the employee. Enter ONLY numbers."
         }
-      ])
-      .then(function(answer) {
-  
-        
-        db.query("INSERT INTO employee (first_name, last_name, role_id, manager_id) VALUES (?, ?, ?, ?)", [answer.FirstName, answer.LastName, answer.roleID, answer.managerID], function(err, res) {
-          if (err) throw err;
-          console.table(res);
-          startScreen();
-        });
-      });
-  }
+
+    ]).then(function (response) {
+        db.query("INSERT INTO employee (first_name, last_name, role_id, manager_id) VALUES (?, ?, ?, ?)", [response.first_name, response.last_name, response.role_id, response.manager_id], function (err, data) {
+            if (err) throw err;
+            console.log('The new employee entered has been added successfully to the database.');
+
+            db.query(`SELECT * FROM employee`, (err, result) => {
+                if (err) {
+                    res.status(500).json({ error: err.message })
+                    startPrompt();
+                }
+                console.table(result);
+                startScreen();
+            });
+        })
+});
+};
   
   //The code for updating the employee inputted by the user 
   
   function updateEmployee() {
-    inquirer
-      .prompt([
+    inquirer.prompt([
         {
-          type: "input",
-          message: "Which employee would you like to update?",
-          name: "Update"
+            name: "first_name",
+            type: "input",
+            message: "Please enter the first name of the employee you want update in the database."
         },
-  
         {
-          type: "input",
-          message: "What do you want to update to?",
-          name: "updateRole"
+            name: "role_id",
+            type: "number",
+            message: "Please enter the new role number id associated with the employee you want to update in the database. Enter ONLY numbers."
         }
-      ])
-      .then(function(answer) {
-        db.query('UPDATE employee SET role_id=? WHERE first_name= ?',[answer.updateRole, answer.Update],function(err, res) {
-          if (err) throw err;
-          console.table(res);
-          startScreen();
-        });
-      });
-  }
+    ]).then(function (response) {
+        db.query("UPDATE employee SET role_id = ? WHERE first_name = ?", [response.role_id, response.first_name], function (err, data) {
+            if (err) throw err;
+            console.log('The new role entered has been added successfully to the database.');
+
+            db.query(`SELECT * FROM employee`, (err, result) => {
+                if (err) {
+                    res.status(500).json({ error: err.message })
+                    startScreen();
+                }
+                console.table(result);
+                startScreen();
+            });
+        })
+});
+};
   
   // The code for viewing departments when selected by the user 
   function viewDepartment() {
@@ -223,6 +238,33 @@ db.connect(function(err) {
     });
     
   }
+
+  //The code for removing employees when selected by the user 
+  function removeEmployee() {
+    db.query("SELECT * FROM employee", function (err, res) {
+      if (err) throw err;
+      inquirer.prompt([
+        {
+          type: "rawlist",
+          name: "removeEmp",
+          message: "Select the employee who will be removed",
+          choices: res.map(emp => emp.id && emp.first_name)
+        }
+      ]).then(function (answer) {
+        const selectedEmp = res.find(emp => emp.id && emp.first_name === answer.removeEmp);
+        db.query("DELETE FROM employee WHERE ?",
+          [{
+            id: selectedEmp.id
+          }],
+          function (err, res) {
+            if (err) throw err;
+            console.log("The employee has been removed.\n");
+            startScreen();
+          }
+        );
+      });
+    })
+  };
   
   function quit() {
     db.end();
